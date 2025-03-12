@@ -12,3 +12,5 @@ The Wrapper for the Agent
 
 # CarRacing.py
 The Environment 
+
+![Demo](CarRacingGIF.gif)
