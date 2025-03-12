@@ -124,17 +124,7 @@ class RaceTrack:
                 track_cells.add((offset_x + j, i))  # Left border
                 track_cells.add((offset_x + width - j, i))  # Right border
         
-        # Determine a valid starting position (not on a wall)
-        # Try to place it in the middle of the track
-        possible_start_x = offset_x + width // 2
-        possible_start_y = offset_y + height // 2
-        
-        # Make sure the starting position isn't on a wall
-        while (possible_start_x, possible_start_y) in track_cells:
-            possible_start_x = random.randint(offset_x + 2, offset_x + width - 2)
-            possible_start_y = random.randint(offset_y + 2, offset_y + height - 2)
-        
-        start_position = (possible_start_x, possible_start_y)
+        start_position = random.choice(list(track_cells))
         
         return track_cells, start_position
 
@@ -171,10 +161,7 @@ class CarRacingEnv:
 
     def reset(self):
         self.track = RaceTrack()
-        base_start = self.track.start_position
-        offset = (random.uniform(-0.5, 0.5), random.uniform(-0.5, 0.5))
-        new_start = (base_start[0] + offset[0], base_start[1] + offset[1])
-        self.car = Car(*new_start)
+        self.car = Car(*self.track.start_position)
         self.total_reward = 0  # Gesamt-Reward zurücksetzen
         self.steps = 0  # Zähler für Schritte
         #print("reset")
