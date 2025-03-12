@@ -1,6 +1,7 @@
 import pygame
 import math
 import numpy as np
+import random
 
 # Konstanten
 SCREEN_WIDTH, SCREEN_HEIGHT = 1000, 1000
@@ -83,22 +84,59 @@ class RaceTrack:
         self.track_cells, self.start_position = self.generate_track()
 
     def generate_track(self):
+        import random
         track_cells = set()
-        # Offset für die gesamte Strecke
-        offset_x = -3  # Verschiebe nach rechts
-        offset_y = -3  # Verschiebe nach unten
-    
-        start_x, start_y = 10 + offset_x, 6 + offset_y  # Startpunkt mit Offset
-    
-        # Eine feste, eckige Strecke definieren
-        for i in range(6 + offset_x, 15 + offset_x):
-            track_cells.add((i, 6 + offset_y))  # Oben
-            track_cells.add((i, 14 + offset_y))  # Unten
-        for i in range(6 + offset_y, 15 + offset_y):
-            track_cells.add((6 + offset_x, i))  # Links
-            track_cells.add((14 + offset_x, i))  # Rechts
-    
-        return track_cells, (start_x, start_y)
+        
+        # Use screen dimensions to ensure track stays within bounds
+        # Assuming SCREEN_WIDTH and SCREEN_HEIGHT are defined elsewhere
+        max_grid_x = SCREEN_WIDTH // GRID_SIZE - 1
+        max_grid_y = SCREEN_HEIGHT // GRID_SIZE - 1
+        
+        # Define track parameters
+        min_width = 8
+        max_width = min(15, max_grid_x - 2)  # Ensure it fits within screen
+        min_height = 8
+        max_height = min(15, max_grid_y - 2)  # Ensure it fits within screen
+        track_thickness = 1  # Width of track wall in cells
+        
+        # Randomly determine track size
+        width = random.randint(min_width, max_width)
+        height = random.randint(min_height, max_height)
+        
+        # Calculate maximum possible offsets that keep track on screen
+        max_offset_x = max_grid_x - width
+        max_offset_y = max_grid_y - height
+        
+        # Calculate offsets ensuring the track stays on screen
+        offset_x = random.randint(1, max(1, max_offset_x))
+        offset_y = random.randint(1, max(1, max_offset_y))
+        
+        # Create outer border (this forms a closed loop)
+        for i in range(offset_x, width + offset_x + 1):
+            # Top and bottom borders
+            for j in range(track_thickness):
+                track_cells.add((i, offset_y + j))  # Top border
+                track_cells.add((i, offset_y + height - j))  # Bottom border
+                
+        for i in range(offset_y, height + offset_y + 1):
+            # Left and right borders
+            for j in range(track_thickness):
+                track_cells.add((offset_x + j, i))  # Left border
+                track_cells.add((offset_x + width - j, i))  # Right border
+        
+        # Determine a valid starting position (not on a wall)
+        # Try to place it in the middle of the track
+        possible_start_x = offset_x + width // 2
+        possible_start_y = offset_y + height // 2
+        
+        # Make sure the starting position isn't on a wall
+        while (possible_start_x, possible_start_y) in track_cells:
+            possible_start_x = random.randint(offset_x + 2, offset_x + width - 2)
+            possible_start_y = random.randint(offset_y + 2, offset_y + height - 2)
+        
+        start_position = (possible_start_x, possible_start_y)
+        
+        return track_cells, start_position
 
     def draw(self, screen):
         for x, y in self.track_cells:
@@ -133,7 +171,10 @@ class CarRacingEnv:
 
     def reset(self):
         self.track = RaceTrack()
-        self.car = Car(*self.track.start_position)
+        base_start = self.track.start_position
+        offset = (random.uniform(-0.5, 0.5), random.uniform(-0.5, 0.5))
+        new_start = (base_start[0] + offset[0], base_start[1] + offset[1])
+        self.car = Car(*new_start)
         self.total_reward = 0  # Gesamt-Reward zurücksetzen
         self.steps = 0  # Zähler für Schritte
         #print("reset")
